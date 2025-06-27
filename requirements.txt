@@ -7,3 +7,4 @@ python-dotenv
 json-rpc
 pydantic_settings
 pydantic[email]
+requests

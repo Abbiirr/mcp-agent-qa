@@ -8,6 +8,7 @@ class Settings(BaseSettings):
 
     LLM_ENDPOINT: str
     DATABASE_URL: str
+    MCP_ENDPOINT: Optional[str] = "http://localhost:8000/insert_user"
 
     # ─── Tell Pydantic-Settings how to load .env ─────────────
     model_config = SettingsConfigDict(
