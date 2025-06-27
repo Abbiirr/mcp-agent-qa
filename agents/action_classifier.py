@@ -8,7 +8,7 @@ def classify_action_via_llm(client, action_input):
     """
     # Your existing code that calls the LLM
     response = client.chat(
-        model="llama3",
+        model="deepseek-r1:8b",
         messages=[
             {
                 "role": "system",

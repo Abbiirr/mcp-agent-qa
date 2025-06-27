@@ -1,9 +1,26 @@
 import requests
 from config import settings
-# Fixed import syntax - Python uses dots for module paths, not file paths with slashes
 from schemas.schemas import InsertCredentialsRequest
 from pydantic import ValidationError
 from ollama import Client
+
+
+def mcp_call(method, params):
+    """Helper function to make JSON-RPC calls to the MCP server"""
+    url = settings.MCP_ENDPOINT if hasattr(settings, 'MCP_ENDPOINT') else "http://localhost:8000/mcp"
+
+    # Prepare JSON-RPC 2.0 request
+    rpc_request = {
+        "jsonrpc": "2.0",
+        "method": method,
+        "params": params,
+        "id": 1  # Simple ID for request tracking
+    }
+
+    # Make the request
+    response = requests.post(url, json=rpc_request)
+    response.raise_for_status()
+    return response.json()
 
 
 def handle_add_data(client: Client, project: str):
@@ -24,10 +41,11 @@ def handle_do_curl(client: Client, project: str):
 
 def handle_open_new_account(client: Client, project: str):
     """
-    Use the MCP-defined insert_user function to open a new account in the database.
-    Prompts the user for account details, validates against the schema, and invokes the MCP server.
+    Open a new account in the database using either direct REST API or MCP.
+    Uses environment variable to determine which method to call.
     """
     print(f"Opening a new account for project {project}...")
+
     # Collect user data
     user_id = input("Enter user_id: ")
     first_name = input("Enter first name: ")
@@ -55,13 +73,39 @@ def handle_open_new_account(client: Client, project: str):
         print("Validation error:\n", e)
         return
 
-    # Call the MCP server's HTTP endpoint
-    url = settings.MCP_ENDPOINT if hasattr(settings, 'MCP_ENDPOINT') else "http://localhost:8000/insert_user"
-    try:
-        response = requests.post(url, json=payload)
-        response.raise_for_status()
-        data = response.json()
-        new_id = data.get("inserted_id")
-        print(f"✅ New account created with id: {new_id}")
-    except requests.RequestException as err:
-        print(f"❌ Failed to create account: {err}")
+    # Determine which method to use based on environment
+    use_mcp = getattr(settings, 'USE_MCP', 'false').lower() == 'true'
+
+    if use_mcp:
+        # Use MCP JSON-RPC approach
+        try:
+            rpc_request = {
+                "jsonrpc": "2.0",
+                "method": "insert_credentials",
+                "params": payload,
+                "id": 1
+            }
+            print(f"📤 MCP request: {rpc_request}")
+
+            rpc_resp = mcp_call('insert_credentials', payload)  # Note: method name from mcp.yaml
+            print(f"📥 MCP response: {rpc_resp}")
+
+            if 'result' in rpc_resp:
+                new_id = rpc_resp['result'].get('inserted_id')
+                print(f"✅ New account created with id: {new_id}")
+            else:
+                error = rpc_resp.get('error', {})
+                print(f"❌ MCP error: {error}")
+        except requests.RequestException as err:
+            print(f"❌ HTTP error calling MCP server: {err}")
+    else:
+        # Use direct REST API approach
+        url = settings.REST_ENDPOINT if hasattr(settings, 'REST_ENDPOINT') else "http://localhost:8000/insert_user"
+        try:
+            response = requests.post(url, json=payload)
+            response.raise_for_status()
+            data = response.json()
+            new_id = data.get("inserted_id")
+            print(f"✅ New account created with id: {new_id}")
+        except requests.RequestException as err:
+            print(f"❌ Failed to create account: {err}")

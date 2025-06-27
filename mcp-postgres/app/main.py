@@ -72,6 +72,8 @@ def insert_credentials(req: InsertCredentialsRequest, conn=Depends(get_conn)):
 
 @app.post("/mcp")
 async def mcp_endpoint(request: Request):
+    body = await request.body()
+    logger.info(f"MCP request received - Raw body: {body.decode()}")
     rpc = await request.json()
     # Basic JSON-RPC 2.0 validation
     if rpc.get("jsonrpc") != "2.0" or "method" not in rpc or "params" not in rpc or "id" not in rpc:
