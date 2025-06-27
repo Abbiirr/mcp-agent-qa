@@ -1,22 +1,22 @@
 name: postgres-mcp
 version: "1.0"
 functions:
-  - name: insert_user
-    description: Insert a new user into the users table
+  - name: insert_credentials
+    description: Insert a row into user_login_credentials
     http:
       method: POST
-      url: http://localhost:8000/insert_user
+      url: http://localhost:8000/mcp
     input_schema:
       type: object
       properties:
-        user_id: { type: string }
-        first_name: { type: string }
-        last_name: { type: string }
-        email: { type: string, format: email }
+        user_id:      { type: string }
+        first_name:   { type: string }
+        last_name:    { type: string }
+        email:        { type: string, format: email }
         phone_number: { type: string }
-        is_active: { type: boolean }
-        required: [ user_id, first_name, last_name ]
-        output_schema:
-          type: object
-          properties:
-            inserted_id: { type: integer }
+        is_active:    { type: boolean }
+      required: [user_id, first_name, last_name]
+    output_schema:
+      type: object
+      properties:
+        inserted_id: { type: integer }
