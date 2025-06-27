@@ -1,0 +1,22 @@
+name: postgres-mcp
+version: "1.0"
+functions:
+  - name: insert_user
+    description: Insert a new user into the users table
+    http:
+      method: POST
+      url: http://localhost:8000/insert_user
+    input_schema:
+      type: object
+      properties:
+        user_id: { type: string }
+        first_name: { type: string }
+        last_name: { type: string }
+        email: { type: string, format: email }
+        phone_number: { type: string }
+        is_active: { type: boolean }
+        required: [ user_id, first_name, last_name ]
+        output_schema:
+          type: object
+          properties:
+            inserted_id: { type: integer }
