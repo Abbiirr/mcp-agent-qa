@@ -3,6 +3,7 @@ from config import settings
 from schemas.schemas import InsertCredentialsRequest
 from pydantic import ValidationError
 from ollama import Client
+import json
 
 
 def mcp_call(method, params):
@@ -39,73 +40,123 @@ def handle_do_curl(client: Client, project: str):
     # TODO: implement actual HTTP request logic here
 
 
+def generate_payload_via_llm(client: Client) -> dict:
+    """
+    Ask the LLM to build a JSON payload for InsertCredentialsRequest.
+    With guaranteed unique user_id, email, and phone_number.
+    """
+    system_prompt = (
+        "You are a JSON payload generator. "
+        "Produce a JSON object with exactly these keys: "
+        "user_id (string), first_name (string), last_name (string), "
+        "email (string or null), phone_number (string or null), is_active (boolean). "
+        "Do not wrap it in any markdown or extra text—only output the JSON."
+    )
+    # empty user content: we just want the structure
+    response = client.chat(
+        model="deepseek-r1:8b",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": ""}
+        ]
+    )
+
+    # Get the raw content from the response dictionary
+    content = response['message']['content']
+    print(f"Raw LLM response: {content}")
+
+    # Extract JSON if it's wrapped in markdown code blocks
+    import re
+    json_match = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', content)
+    if json_match:
+        content = json_match.group(1)
+
+    # Try to parse the JSON
+    try:
+        import uuid
+        import random
+        from datetime import datetime
+
+        # Parse initial payload from LLM
+        payload = json.loads(content)
+
+        # Generate unique values
+        timestamp = datetime.now().strftime("%m%d%H%M")
+        unique_id = uuid.uuid4().hex[:8]
+
+        # Keep the LLM-generated names but ensure unique identifiers
+        first_name = payload.get("first_name", "User")
+        last_name = payload.get("last_name", "Test")
+
+        # Override with unique values
+        payload["user_id"] = f"{first_name.lower()}_{timestamp}_{unique_id}"
+        payload["email"] = f"{first_name.lower()}.{last_name.lower()}.{unique_id}@example.com"
+        # Replace the phone_number line with this:
+        payload[
+            "phone_number"] = f"+1-{random.randint(200, 999)}-{random.randint(100, 999)}-{random.randint(1000, 9999)}"
+
+        print(f"✅ Generated payload with unique values: {json.dumps(payload, indent=2)}")
+        return payload
+    except json.JSONDecodeError as e:
+        print(f"❌ Failed to parse JSON from LLM: {e}")
+        print(f"Content that failed to parse: {content}")
+        return {}
+
 def handle_open_new_account(client: Client, project: str):
-    """
-    Open a new account in the database using either direct REST API or MCP.
-    Uses environment variable to determine which method to call.
-    """
-    print(f"Opening a new account for project {project}...")
+    print(f"\n🚀 Opening a new account for project '{project}'\n")
 
-    # Collect user data
-    user_id = input("Enter user_id: ")
-    first_name = input("Enter first name: ")
-    last_name = input("Enter last name: ")
-    email = input("Enter email (optional): ") or None
-    phone = input("Enter phone number (optional): ") or None
-    # Default to active
-    is_active_input = input("Is the account active? (y/n) [y]: ") or "y"
-    is_active = is_active_input.strip().lower() not in ["n", "no"]
+    # 1) Ask if AI should fill the payload
+    choice = input("Generate account details automatically via AI? (y/n) [y]: ").strip().lower() or "y"
+    if choice in ("y", "yes"):
+        payload = generate_payload_via_llm(client)
+        if not payload:
+            print("❌ Aborting: payload generation failed.")
+            return
+    else:
+        # Manual entry
+        payload = {
+            "user_id":      input("• Enter user_id: ").strip(),
+            "first_name":   input("• Enter first name: ").strip(),
+            "last_name":    input("• Enter last name: ").strip(),
+            "email":        input("• Enter email (optional): ").strip() or None,
+            "phone_number": input("• Enter phone number (optional): ").strip() or None,
+            "is_active":    (input("• Is the account active? (y/n) [y]: ").strip() or "y").lower() not in ("n","no")
+        }
 
-    # Prepare payload
-    payload = {
-        "user_id": user_id,
-        "first_name": first_name,
-        "last_name": last_name,
-        "email": email,
-        "phone_number": phone,
-        "is_active": is_active,
-    }
-
-    # Validate payload
+    # 2) Validate payload
     try:
         InsertCredentialsRequest(**payload)
-    except ValidationError as e:
-        print("Validation error:\n", e)
+    except ValidationError as ve:
+        print("\n❌ Validation error:")
+        print(ve)
         return
 
-    # Determine which method to use based on environment
+    # 3) Call via MCP or REST
     use_mcp = getattr(settings, 'USE_MCP', 'false').lower() == 'true'
-
     if use_mcp:
-        # Use MCP JSON-RPC approach
+        print("\n📤 Sending JSON-RPC to MCP server…")
         try:
-            rpc_request = {
-                "jsonrpc": "2.0",
-                "method": "insert_credentials",
-                "params": payload,
-                "id": 1
-            }
-            print(f"📤 MCP request: {rpc_request}")
-
-            rpc_resp = mcp_call('insert_credentials', payload)  # Note: method name from mcp.yaml
-            print(f"📥 MCP response: {rpc_resp}")
-
-            if 'result' in rpc_resp:
-                new_id = rpc_resp['result'].get('inserted_id')
-                print(f"✅ New account created with id: {new_id}")
+            rpc_resp = mcp_call("insert_credentials", payload)
+            print("📥 MCP response:", json.dumps(rpc_resp, indent=2))
+            if "result" in rpc_resp:
+                # For MCP path (replace the current line):
+                print(
+                    f"\n✅ New account created: user_id={payload['user_id']}, email={payload.get('email')}, phone={payload.get('phone_number')}")
             else:
-                error = rpc_resp.get('error', {})
-                print(f"❌ MCP error: {error}")
-        except requests.RequestException as err:
-            print(f"❌ HTTP error calling MCP server: {err}")
+                print("❌ MCP error:", rpc_resp.get("error"))
+        except (requests.RequestException, ValidationError) as err:
+            print("❌ MCP call failed:", err)
     else:
-        # Use direct REST API approach
-        url = settings.REST_ENDPOINT if hasattr(settings, 'REST_ENDPOINT') else "http://localhost:8000/insert_user"
+        rest_url = getattr(settings, 'REST_ENDPOINT', "http://localhost:8000/insert_user")
+        print(f"\n📤 Sending direct POST to {rest_url} …")
         try:
-            response = requests.post(url, json=payload)
-            response.raise_for_status()
-            data = response.json()
-            new_id = data.get("inserted_id")
-            print(f"✅ New account created with id: {new_id}")
+            resp = requests.post(rest_url, json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+            # For REST API path (replace the current line):
+            print(
+                f"\n✅ New account created: user_id={payload['user_id']}, email={payload.get('email')}, phone={payload.get('phone_number')}")
         except requests.RequestException as err:
-            print(f"❌ Failed to create account: {err}")
+            print("❌ REST call failed:", err)
+        except ValueError:
+            print("❌ Invalid JSON response:", resp.text)
