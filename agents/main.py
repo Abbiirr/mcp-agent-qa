@@ -10,8 +10,12 @@ from agents.common_actions import (
 from agents.actions.auth import login_and_get_token
 from ollama import ResponseError
 from agents.actions.pathao_data_add import (
-    handle_pathao_data,
+handle_full_trip_data,
 
+)
+from agents.classifiers.pathao_intent_classifier import handle_pathao_data
+from agents.actions.pathao_data_add import (
+handle_ride_request_data,
 )
 
 
@@ -64,7 +68,8 @@ def main():
 
     # auth_token = login_and_get_token()
     auth_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyXzEiLCJleHAiOjE3NTEwOTQzNzl9.U0UAmv84ii_yckpsz578r45czyaymUw_LLXyVRXFTxU"
-    handle_pathao_data(client, "project", auth_token)
+    # handle_pathao_data(client, "project", auth_token)
+    handle_ride_request_data(client, "project", auth_token)
 
 if __name__ == "__main__":
     main()

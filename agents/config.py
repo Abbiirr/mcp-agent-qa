@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     MCP_ENDPOINT: Optional[str] = "http://localhost:8000/insert_user"
     USE_MCP: Optional[str] = "false"  # Default to false, can be overridden in .env
+    DEVICE_ID: Optional[str] = None
+    AUTH_TOKEN: Optional[str] = None
 
     # ─── Tell Pydantic-Settings how to load .env ─────────────
     model_config = SettingsConfigDict(
