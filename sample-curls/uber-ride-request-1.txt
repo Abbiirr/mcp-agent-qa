@@ -1,0 +1,17 @@
+curl -X POST 'http://localhost:8000/api/v1/uber/raw-ride-request' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyXzEiLCJleHAiOjE3NTA4MzYxMDh9.MoJLE_vn8nj3Oji9HgwiLpq4LE-XcT8OHc2OKEym-dA' \
+  -d '{
+    "fare": "BDT147.06",
+    "trip_type": "UberMoto",
+    "bonus": "",
+    "pickup_location": "1206 Manikdi Bazar Road, Dhaka 1206, Bangladesh",
+    "destination_location": "Airport - Dakshinkhan Rd, Dhaka 1229, Bangladesh",
+    "trip_summary": "19 mins (8.4 km) trip",
+    "pickup_time": "<1 min (0 km) away",
+    "is_surge": false,
+    "coordinates": "[23.8262962, 90.3888555]",
+    "timestamp": 1746448579000,
+    "device_id": "dd5770b24f5ed4e0"
+  }'

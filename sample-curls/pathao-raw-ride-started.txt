@@ -1,0 +1,11 @@
+curl -X POST 'http://localhost:8000/api/v1/pathao/raw-ride-started' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  -d '{
+    "event": "ride_started",
+    "coordinates": "[23.7816814, 90.399625]",
+    "destination_location": "Banani, Dhaka",
+    "timestamp": 1745993334947,
+    "device_id": "57e2938aaa20c833"
+}'

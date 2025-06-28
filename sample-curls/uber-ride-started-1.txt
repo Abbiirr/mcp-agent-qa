@@ -1,0 +1,12 @@
+curl -X POST 'http://localhost:8000/api/v1/uber/raw-ride-started' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyXzEiLCJleHAiOjE3NTA4MzYxMDh9.MoJLE_vn8nj3Oji9HgwiLpq4LE-XcT8OHc2OKEym-dA' \
+  -d '{
+    "event": "ride_started",
+    "current_location": "Hazrat Shahjalal International Airport",
+    "destination_location": "Airport - Dakshinkhan Rd, Dhaka",
+    "coordinates": "[23.8262962, 90.3888555]",
+    "timestamp": 1746448613000,
+    "device_id": "dd5770b24f5ed4e0"
+  }'

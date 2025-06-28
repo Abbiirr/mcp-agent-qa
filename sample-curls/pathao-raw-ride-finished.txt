@@ -1,0 +1,11 @@
+curl -X POST 'http://localhost:8000/api/v1/pathao/raw-trip-finished' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyXzEiLCJleHAiOjE3NTA3NjgxOTV9.nFCk22dScBvAAZQFuTuJt32mMdlSK57Q_t2KcPL02Kg' \
+  -d '{
+    "fare": "58.10",
+    "discount": "Customer has a ৳24.90 discount",
+    "coordinates": "[23.7816805, 90.3995925]",
+    "timestamp": 1745904684308,
+    "device_id": "57e2938aaa20c833"
+}'

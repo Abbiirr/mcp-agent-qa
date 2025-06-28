@@ -1,0 +1,11 @@
+curl -X POST 'http://localhost:8000/api/v1/uber/raw-collect-payment' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json' \
+  -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyXzEiLCJleHAiOjE3NTA4MzYxMDh9.MoJLE_vn8nj3Oji9HgwiLpq4LE-XcT8OHc2OKEym-dA' \
+  -d '{
+    "event": "collect_payment",
+    "fare": "BDT40.19",
+    "coordinates": "[23.8262962, 90.3888555]",
+    "timestamp": 1746448627000,
+    "device_id": "dd5770b24f5ed4e0"
+  }'

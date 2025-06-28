@@ -1,0 +1,18 @@
+curl -X POST "http://localhost:8000/api/v1/pathao/raw-trip-receipt" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyXzEiLCJleHAiOjE3NTA3NjcwMjV9.9e4DC4KgcuPJGKpXFAr6JRtEOZngIo935n-x9TqlDeQ" \
+  -d '{
+    "discount": "",
+    "base_fare": "৳80.00",
+    "safety_coverage_fee": "৳3.00",
+    "fare": "৳83.00",
+    "trip_fare": "৳80.00",
+    "surge_amount": "",
+    "surge_multiplier": "",
+    "pathao_net_commission": "- ৳12.00",
+    "trip_earnings": "৳68.00",
+    "timestamp": 1747908146326,
+    "coordinates": "[23.7816224, 90.3997488]",
+    "device_id": "57e2938aaa20c833"
+  }'

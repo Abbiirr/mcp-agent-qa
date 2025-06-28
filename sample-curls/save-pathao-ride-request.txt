@@ -1,0 +1,12 @@
+curl -X POST 'http://localhost:8000/api/v1/pathao/raw-ride-request'   -H 'Content-Type: application/json'   -H 'Accept: application/json'   -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyXzEiLCJleHAiOjE3NTA3NjQxNTJ9.T-L_y-cdg13qgRvdwoU1TU-SAxrPs_urvp4s4IlaBdY'   -d '{
+    "id": 12345,
+    "fare": "৳142.82",
+    "bonus": "৳11",
+    "pickup_location": "Continental Insurance Limited, Head Office, Amtoli, Mohakhali",
+    "destination_location": "Continental Insurance Limited, Head Office, Amtoli, Mohakhali",
+    "distance": "5.92 KM",
+    "is_surge": true,
+    "coordinates": "[23.7817088, 90.399587]",
+    "device_id": "57e2938aaa20c833",
+    "timestamp": 1745988532114
+  }'
