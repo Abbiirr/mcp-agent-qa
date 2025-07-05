@@ -15,7 +15,7 @@ class PathaoConfig:
     device_id: str
     # Use your real REST URL here
     base_url: str = (
-        "https://gigly-recommendation-engine-service-api.global.fintech23.xyz"
+        "http://127.0.0.1:8000"
         "/api/v1/pathao/raw-ride-request"
     )
 
@@ -43,7 +43,7 @@ class PathaoPayloadGenerator:
     def _system_prompt(self) -> str:
         return (
             "You are a JSON payload generator for Pathao ride requests in Dhaka.\n"
-            "Keys: id (int), fare (string, e.g. \"৳142.82\"), bonus (string),\n"
+            "Keys: fare (string, e.g. \"৳142.82\"), bonus (string, e.g. \"11.00\"),\n"
             "pickup_location (string), destination_location (string), distance (string, \"X.XX KM\"),\n"
             "is_surge (boolean), coordinates (string), device_id (string), timestamp (int).\n"
             f"Use device_id: \"{self.config.device_id}\".\n"

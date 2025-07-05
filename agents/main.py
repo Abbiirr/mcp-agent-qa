@@ -16,6 +16,8 @@ handle_full_trip_data,
 from agents.classifiers.pathao_intent_classifier import handle_pathao_data
 from agents.actions.pathao_data_add import (
 handle_ride_request_data,
+handle_ride_started_data,
+handle_ride_finished_data
 )
 
 
@@ -67,9 +69,9 @@ def main():
     #     print(f"Unknown action: {action}")
 
     # auth_token = login_and_get_token()
-    auth_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyXzEiLCJleHAiOjE3NTEwOTQzNzl9.U0UAmv84ii_yckpsz578r45czyaymUw_LLXyVRXFTxU"
+    auth_token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huXzA2MjcxNzQzX2Q3ZWM3ZWNiIiwiZXhwIjoxNzUxNzE0MDgzLCJpYXQiOjE3NTE3MTA0ODN9.SvnfuDgSTIvQK2WgK3hEC_PF2m35uliBcBF_eEUhohw"
     # handle_pathao_data(client, "project", auth_token)
-    handle_ride_request_data(client, "project", auth_token)
+    handle_ride_finished_data(client, "project", auth_token)
 
 if __name__ == "__main__":
     main()

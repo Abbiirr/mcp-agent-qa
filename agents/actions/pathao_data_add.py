@@ -2,7 +2,7 @@
 
 import json
 import requests
-from ollama import Client
+from ollama import Client, ResponseError
 from agents.config import settings
 
 
@@ -22,8 +22,11 @@ from typing import Callable, Dict, Optional
 
 import json
 from ollama import Client
-from config import settings
+from agents.config import settings
 from agents.payload_generators.pathao_ride_request import PathaoConfig, PathaoPayloadGenerator
+from agents.payload_generators.pathao_ride_started import PathaoRideStartedGenerator
+from agents.payload_generators.pathao_ride_finished import PathaoTripFinishedGenerator
+import time
 
 
 
@@ -105,9 +108,9 @@ def handle_ride_request_data(client: Client, project: str, auth_token: str):
     gen = PathaoPayloadGenerator(cfg, client)
 
     # 2) Ask whether to auto-generate via AI
-    choice = input("Auto-generate ride-request payload via AI? (y/n) [y]: ")\
-             .strip().lower() or "y"
-
+    # choice = input("Auto-generate ride-request payload via AI? (y/n) [y]: ")\
+    #          .strip().lower() or "y"
+    choice = 'y'  # Default to 'yes' for easier testing
     if choice in ("y", "yes"):
         print("🤖 Generating ride-request payload via AI...\n")
         # Let the LLM generate it (with fallback if the model fails)
@@ -125,55 +128,118 @@ def handle_ride_request_data(client: Client, project: str, auth_token: str):
         print("❌ Failed to send ride-request payload.")
 
 
-def handle_ride_started_data(client: Client, project: str, auth_token: str):
-    print(f"\n▶️ Collecting RIDE STARTED for '{project}'")
-    payload = {
-        "ride_id":    input("• Ride ID: ").strip(),
-        "driver_id":  input("• Driver ID: ").strip(),
-        "start_time": input("• Start time (YYYY-MM-DD HH:MM:SS): ").strip(),
-    }
+def handle_ride_started_data(
+    client: Client,
+    project: str,
+    auth_token: str,
+    use_ai_default: bool = True,
+):
+    """
+    Collects a Pathao 'ride_started' payload—either auto-generated via LLM,
+    manual-entry fallback, or random fallback—and POSTs it.
+    """
+    print(f"\n▶️ Collecting RIDE STARTED for '{project}'\n")
 
-    url = getattr(settings, "PATHAO_RIDE_STARTED_ENDPOINT",
-                  "https://gigly-recommendation-engine-service-api.global.fintech23.xyz/api/v1/pathao/raw-ride-started")
-    headers = {
-        "Authorization": f"Bearer {auth_token}",
-        "Accept":        "application/json",
-        "Content-Type":  "application/json",
-    }
+    # 1) Prepare generator
+    cfg = PathaoConfig(
+        auth_token=auth_token,
+        device_id=settings.DEVICE_ID,
+        base_url=getattr(
+            settings,
+            "PATHAO_RIDE_STARTED_ENDPOINT",
+            "https://gigly-recommendation-engine-service-api.global.fintech23.xyz"
+            "/api/v1/pathao/raw-ride-started"
+        )
+    )
+    gen = PathaoRideStartedGenerator(cfg, client)
 
-    print(f"\n🚀 POST {url}\nHeaders: {headers}\nPayload:\n{json.dumps(payload, indent=2)}\n")
-    resp = requests.post(url, headers=headers, json=payload)
-    try:
-        resp.raise_for_status()
-        print("✅ Success:", resp.json())
-    except requests.HTTPError as e:
-        print("❌ Error:", e, resp.text)
+    # 2) Ask whether to auto-generate via AI
+    prompt = "Auto-generate ride_started payload via AI? (y/n)"
+    # choice = input(f"{prompt} [{'Y' if use_ai_default else 'n'}]: ").strip().lower()
+    choice = "y"
+    if not choice:
+        choice = 'y' if use_ai_default else 'n'
+
+    if choice in ("y", "yes"):
+        print("🤖 Generating ride_started payload via AI...\n")
+        payload = gen.generate_via_llm()
+
+    else:
+        # 3) Manual entry fallback
+        print("✍️  Please enter ride_started details:")
+        payload = {
+            "ride_id":           input("• Ride ID: ").strip(),
+            "driver_id":         input("• Driver ID: ").strip(),
+            "start_time":        input("• Start time (YYYY-MM-DD HH:MM:SS): ").strip(),
+            "event":             "ride_started",
+            "device_id":         settings.DEVICE_ID,
+            "timestamp":         int(time.time() * 1000),
+        }
+
+    print(f"\n✅ Payload ready:\n{json.dumps(payload, indent=2)}\n")
+
+    # 4) Send it
+    success = gen.send_request(payload)
+    if not success:
+        print("❌ Failed to send ride_started payload.")
 
 
-def handle_ride_finished_data(client: Client, project: str, auth_token: str):
-    print(f"\n⏹️ Collecting RIDE FINISHED for '{project}'")
-    payload = {
-        "ride_id":     input("• Ride ID: ").strip(),
-        "end_time":    input("• End time (YYYY-MM-DD HH:MM:SS): ").strip(),
-        "total_fare":  input("• Total fare: ").strip(),
-        "cancelled":   input("• Cancelled? (y/n) [n]: ").strip().lower() in ("y", "yes"),
-    }
+def handle_ride_finished_data(
+    client: Client,
+    project: str,
+    auth_token: str,
+    use_ai_default: bool = True
+):
+    """
+    Collects a Pathao 'trip_finished' payload—either auto-generated via LLM
+    or manual—and POSTs it with the Bearer token.
+    """
+    print(f"\n⏹️ Collecting TRIP FINISHED for '{project}'\n")
 
-    url = getattr(settings, "PATHAO_RIDE_FINISHED_ENDPOINT",
-                  "https://gigly-recommendation-engine-service-api.global.fintech23.xyz/api/v1/pathao/raw-ride-finished")
-    headers = {
-        "Authorization": f"Bearer {auth_token}",
-        "Accept":        "application/json",
-        "Content-Type":  "application/json",
-    }
+    # 1) Prepare the generator
+    cfg = PathaoConfig(
+        auth_token=auth_token,
+        device_id=settings.DEVICE_ID,
+        base_url=getattr(
+            settings,
+            "PATHAO_TRIP_FINISHED_ENDPOINT",
+            "https://gigly-recommendation-engine-service-api.global.fintech23.xyz"
+            "/api/v1/pathao/raw-trip-finished"
+        )
+    )
+    gen = PathaoTripFinishedGenerator(cfg, client)
 
-    print(f"\n🚀 POST {url}\nHeaders: {headers}\nPayload:\n{json.dumps(payload, indent=2)}\n")
-    resp = requests.post(url, headers=headers, json=payload)
-    try:
-        resp.raise_for_status()
-        print("✅ Success:", resp.json())
-    except requests.HTTPError as e:
-        print("❌ Error:", e, resp.text)
+    # 2) Ask whether to auto-generate via AI
+    default = 'Y' if use_ai_default else 'n'
+    # choice = input(f"Auto-generate trip_finished payload via AI? (y/n) [{default}]: ")\
+             # .strip().lower()
+    choice = 'y'  # Default to 'yes' for easier testing
+    if not choice:
+        choice = 'y' if use_ai_default else 'n'
+
+    if choice in ("y", "yes"):
+        print("🤖 Generating trip_finished payload via AI...\n")
+        payload = gen.generate_via_llm()
+    else:
+        # 3) Manual-entry fallback
+        print("✍️  Please enter trip_finished details:\n")
+        coords   = input("• Coordinates (e.g. \"[23.78, 90.39]\"): ").strip()
+        discount = input("• Discount message: ").strip()
+        fare     = input("• Fare (e.g. \"58.10\"): ").strip()
+
+        payload = {
+            "coordinates": coords,
+            "device_id":   settings.DEVICE_ID,
+            "discount":    discount,
+            "fare":        fare,
+            "timestamp":   int(time.time() * 1000),
+        }
+
+    # 4) Show & send
+    print(f"\n✅ Payload:\n{json.dumps(payload, indent=2)}\n")
+    success = gen.send_request(payload)
+    if not success:
+        print("❌ Failed to send trip_finished payload.")
 
 
 def handle_trip_receipt_data(client: Client, project: str, auth_token: str):
