@@ -15,7 +15,7 @@ class PathaoConfig:
     device_id: str
     # Use your real REST URL here
     base_url: str = (
-        "http://127.0.0.1:8000"
+        "https://gigly-recommendation-engine-service-api.global.fintech23.xyz"
         "/api/v1/pathao/raw-ride-request"
     )
 

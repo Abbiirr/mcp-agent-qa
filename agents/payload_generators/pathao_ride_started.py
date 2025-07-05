@@ -32,8 +32,15 @@ class PathaoRideStartedGenerator:
     def _system_prompt(self) -> str:
         return (
             "You are a JSON payload generator for Pathao ride_started events in Dhaka.\n"
-            "Keys: coordinates (string), destination_location (string), device_id (string), event (string), timestamp (int).\n"
-            f"Use device_id: \"{self.config.device_id}\" and event: \"ride_started\".\n"
+            "Use this example as your template—output must match it exactly (keys, types, and ordering):\n"
+            "{\n"
+            "  \"coordinates\": \"[23.7816814, 90.399625]\",\n"
+            "  \"destination_location\": \"Banani, Dhaka\",\n"
+            "  \"device_id\": \"57e2938aaa20c833\",\n"
+            "  \"event\": \"ride_started\",\n"
+            "  \"timestamp\": 1751440833703\n"
+            "}\n"
+            f"Always use device_id: \"{self.config.device_id}\" and event: \"ride_started\" with fresh timestamp.\n"
             "Output ONLY the JSON object—no markdown or extra text."
         )
 

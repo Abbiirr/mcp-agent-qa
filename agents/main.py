@@ -19,6 +19,10 @@ handle_ride_request_data,
 handle_ride_started_data,
 handle_ride_finished_data
 )
+from agents.actions.summary_actions import (
+handle_total_trips_summary
+)
+from agents.orchestrators.summary_verifier import verify_trip_increment
 
 
 def main():
@@ -69,9 +73,9 @@ def main():
     #     print(f"Unknown action: {action}")
 
     # auth_token = login_and_get_token()
-    auth_token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huXzA2MjcxNzQzX2Q3ZWM3ZWNiIiwiZXhwIjoxNzUxNzE0MDgzLCJpYXQiOjE3NTE3MTA0ODN9.SvnfuDgSTIvQK2WgK3hEC_PF2m35uliBcBF_eEUhohw"
+    auth_token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huXzA2MjcxNzQzX2Q3ZWM3ZWNiIiwiZXhwIjoxNzUxNzE3Nzc5LCJpYXQiOjE3NTE3MTQxNzl9.7ZoIlFxM79Z2G77NN8nRawpQNs3UhG4w6e6tlQ-U4Y4"
     # handle_pathao_data(client, "project", auth_token)
-    handle_ride_finished_data(client, "project", auth_token)
+    verify_trip_increment(client, "project", auth_token)
 
 if __name__ == "__main__":
     main()
